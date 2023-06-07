@@ -1,0 +1,43 @@
+{
+	"testName":"Version number querry",
+	"mqtt_pub":[
+	],
+	"mqtt_sub":[
+		{
+			"topic":"creoir/asr/listening",
+			"payload":"any",
+			"timeOut": 3000
+		},
+		{
+			"topic":"creoir/asr/intentRecognized",
+			"payload":"any",
+			"timeOut": 3000
+		},
+		{
+			"topic":"creoir/talk/speak",
+			"payload":"any",
+			"timeOut": 2000
+		},
+		{
+			"topic":"creoir/talk/finished",
+			"payload":"any",
+			"timeOut": 10000
+		},
+		{
+			"topic":"creoir/asr/error",
+			"payload":"any",
+			"timeOut": 0
+		}		
+	],
+	"playBackAudio":[
+		{
+			"filePath": "hello_home-enu.wav"
+		},
+		{
+			"filePath": "open_main_door-enu.wav"
+		},
+		{
+			"filePath": "voice_is_the_key-enu.wav"
+		}
+	]
+}

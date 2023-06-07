@@ -1,0 +1,42 @@
+{
+	"testName":"Audio scenario switch",
+	"foo":"bar",
+	"foo1":"bar1",
+	"Actions":[
+	{
+		"pub":
+		{
+			"topic":"creoir/asr/setContext",
+			"payload":
+			{
+				"contextName":"password",
+				"timeOut":0,
+				"action_after_result":"resume_to_this_context"
+			}
+		}
+	},
+	{
+		"sub":
+		{
+			"topic":"creoir/asr/intentNotRecognized",
+			"payload":"any",
+			"failOnReceive":1
+		}
+	},
+	{
+		"sub":
+		{
+			"topic":"creoir/asr/intentRecognized",
+			"payload":"any",
+			"sleep":7000,
+			"failOnReceive":0
+		}
+	},
+	{
+		"play":
+		{
+			"filename":"voice_is_the_key.wav"
+		}
+	}
+	]
+}

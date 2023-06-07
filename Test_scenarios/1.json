@@ -1,0 +1,33 @@
+{
+	"testName":"Version querry",
+	"Actions":[
+	{
+		"sub":
+		{
+			"topic":"creoir/asr/listening",
+			"payload":"any",
+			"timeout":4000
+		}
+	},
+	{
+		"play":
+		{
+			"filename":"hello_home.wav"
+		}
+	},
+	{
+		"sub":
+		{
+			"topic":"creoir/asr/intentRecognized",
+			"payload":"any",
+			"timeout":7000
+		}
+	},
+	{
+		"play":
+		{
+			"filepath":"audiofiles/version_number.wav"
+		}
+	}
+	]
+}
