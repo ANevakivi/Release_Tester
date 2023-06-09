@@ -1,9 +1,12 @@
 import paho.mqtt.client as mqtt
 import simpleaudio as sa
-import json, os, re, threading
+import json, os, re, threading, time
 
 timer_completion_event = threading.Event()
 timer_cancellation_event = threading.Event()
+
+active_timers = {}  # Dictionary to store active timers
+expected_topics = []
 
 def handle_publish(action):
     print(
@@ -11,7 +14,13 @@ def handle_publish(action):
         f"Topic: {action['topic']}\n"
         f"Payload: {action['payload']}"
     )
-    mqtt_client.publish(action['topic'], action['payload')
+    payload = json.dumps(action['payload'])
+    mqtt_client.publish(action['topic'], payload)
+    print(action)
+    if 'sleep' in action:
+        print("sleeping")
+        sleep_duration = action['sleep'] / 1000.0  # Convert milliseconds to seconds
+        time.sleep(sleep_duration)
 
 def handle_subscribe(action):
 
@@ -27,6 +36,7 @@ def handle_subscribe(action):
         )
 
 def handle_play_file(action):
+    file_path = action['filePath']
     try:
         wave_obj = sa.WaveObject.from_wave_file(file_path)
         play_obj = wave_obj.play()
@@ -82,6 +92,48 @@ class MQTTClient:
         print(f"Received message on topic: {msg.topic}")
         print(f"Message: {msg.payload.decode()}")
 
+
+        if expected_topics:
+            if msg.topic not in expected_topics:
+                print(f"Received topic {msg.topic} not excpected")
+                test_result.set_fail(f"Received topic {msg.topic} not excpected")
+                return
+            else:
+                for action in data['Actions']:
+                    for key, value in action.items():
+                        if key == "pub":
+                            continue
+                        else:
+                            if 'topic' in value.keys() and value['topic'] == msg.topic:
+
+                                if 'failOnReceive' in value and value['failOnReceive']:
+                                    print("Received message triggered a fail")
+                                    test_result.set_fail("Received message triggered a fail")
+
+                                elif 'payload' in value:
+                                    expected_payload = value['payload']
+                                    received_payload = json.loads(msg.payload.decode())
+
+                                    if expected_payload == "any":
+                                        test_result.set_pass()
+                                    else:
+                                        for key, value in expected_payload.items():
+                                            if key not in received_payload or received_payload[key] != value:
+                                                print(f"Payload key {key} and value {value} not found in received payload or mismatched")
+                                                test_result.set_fail(f"Payload mismatch. Expected: {expected_payload}. Got: {received_payload}")
+                                                break
+                                        else:
+                                            test_result.set_pass()
+
+                                mqtt_client.unsubscribe(msg.topic)
+
+        if active_timers:
+            if msg.topic in active_timers:
+                # Cancel the timer for the received topic
+                timer_thread = active_timers[msg.topic]
+                timer_thread.cancel()
+                print(f"Cancelled timer for topic: {msg.topic}")
+
 class TimerThread(threading.Thread):
     def __init__(self, timer_id, duration_ms):
         super().__init__()
@@ -91,23 +143,57 @@ class TimerThread(threading.Thread):
 
     def run(self):
         event_triggered = threading.Event()
+        start_time = time.time()
+
         while not event_triggered.is_set():
-            event_triggered.wait(self.duration)
 
             if timer_cancellation_event.is_set():
                 print("The timer was cancelled")
                 event_triggered.set()
-            elif not event_triggered.is_set():
+            elif time.time() - start_time > self.duration:
                 print("The timer completed")
                 self.callback(self.timer_id)
                 event_triggered.set()
+
         del active_timers[self.timer_id]
 
     def cancel(self):
-        self.cancelled.set()
+        timer_cancellation_event.set()
 
-def start_timer(timer_id, duration, callback):
-    timer_thread = TimerThread(timer_id, duration, callback)
+class TestResult:
+    def __init__(self, test_name):
+        self.test_name = test_name
+        self.result = None
+        self.reason = None
+
+    def set_pass(self):
+        self.result = "Pass"
+
+    def set_fail(self, reason):
+        self.result = "Fail"
+        self.reason = reason
+
+    def get_result(self):
+        return self.result
+
+    def __str__(self):
+        return f"Test Name: {self.test_name}\nResult: {self.result}\nReason: {self.reason or 'N/A'}\n"
+
+class TestReport:
+    def __init__(self):
+        self.test_results = []
+
+    def add_result(self, test_result):
+        self.test_results.append(test_result)
+
+    def generate_report(self):
+        report = ""
+        for test_result in self.test_results:
+            report += str(test_result)
+        return report
+
+def start_timer(timer_id, duration):
+    timer_thread = TimerThread(timer_id, duration)
     active_timers[timer_id] = timer_thread
     timer_thread.start()
     return timer_thread
@@ -123,6 +209,7 @@ def cancel_timer(timer_id):
 
 def timer_callback(timer_id):
     print(f"Timer {timer_id} completed")
+    test_result.set_fail(f"Topic: {timer_id} timeout")
     timer_completion_event.set()
 
 def get_files_in_folder(folder_path):
@@ -150,18 +237,38 @@ if __name__ == '__main__':
     mqtt_client = MQTTClient("localhost", 1883)
     mqtt_client.connect()
 
+    test_report = TestReport()  # Create an instance of TestReport
+
     files = get_files_in_folder("Test_scenarios")
     for file in files:
         data = read_json_file(file)
 
+        test_name = data.get("testName")  # Retrieve the test case name from the JSON data
+        test_result = TestResult(test_name) # Create a TestResult object for the current test case
+
         for item in data["Actions"]:
             action_type, action_data = next(iter(item.items()))
+
+            if action_type == "sub":
+                expected_topics.append(action_data["topic"])
 
             if action_type in ACTION_HANDLERS:
                 ACTION_HANDLERS[action_type](action_data)
 
                 if active_timers:
                     if timer_completion_event.is_set():
+                        test_result.set_fail("Timeout")
 
             else:
                 print(f"Unknown action type: {action_type}")
+        print(expected_topics)
+
+        while active_timers:
+            timer_completion_event.wait(timeout=0)
+
+
+        test_report.add_result(test_result)
+        timer_completion_event.clear()
+
+    final_report = test_report.generate_report()
+    print(final_report)
