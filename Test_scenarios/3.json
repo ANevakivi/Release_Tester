@@ -7,10 +7,11 @@
 		"pub":
 		{
 			"topic":"creoir/asr/setContext",
+			"sleep":300,
 			"payload":
 			{
-				"contextName":"password",
-				"timeOut":0,
+				"contextName":"PASSWORD",
+				"timeOut":6000,
 				"action_after_result":"resume_to_this_context"
 			}
 		}
@@ -27,15 +28,15 @@
 		"sub":
 		{
 			"topic":"creoir/asr/intentRecognized",
-			"payload":"any",
-			"sleep":7000,
+			"payload":{"utterance":"voice is the key","intent":"testi"},
+			"timeout":5000,
 			"failOnReceive":0
 		}
 	},
 	{
 		"play":
 		{
-			"filename":"voice_is_the_key.wav"
+			"filePath":"audiofiles/voice_is_the_key.wav"
 		}
 	}
 	]
