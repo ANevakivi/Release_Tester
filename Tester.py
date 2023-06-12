@@ -12,28 +12,29 @@ def handle_publish(action):
     print(
         f"\nAction publish.\n"
         f"Topic: {action['topic']}\n"
-        f"Payload: {action['payload']}"
+        f"Payload: {action['payload']}\n"
     )
     payload = json.dumps(action['payload'])
     mqtt_client.publish(action['topic'], payload)
     print(action)
     if 'sleep' in action:
-        print("sleeping")
         sleep_duration = action['sleep'] / 1000.0  # Convert milliseconds to seconds
         time.sleep(sleep_duration)
 
 def handle_subscribe(action):
 
     mqtt_client.subscribe(action['topic'])
-    if "timeout" in action:
-        start_timer(action['topic'], action['timeout'])
-        print(f"timeout: {action['timeout']}")
-
+    
     print(
         f"\nAction subscribe.\n"
         f"Topic: {action['topic']}\n"
         f"Payload requirement: {action['payload']}"
-        )
+    )
+    if "timeout" in action:
+        start_timer(action['topic'], action['timeout'])
+        print(f"timeout: {action['timeout']}\n")
+
+
 
 def handle_play_file(action):
     file_path = action['filePath']
@@ -63,6 +64,8 @@ class MQTTClient:
 
         self.broker_url = broker_url
         self.broker_port = broker_port
+        
+        self.connected_event = threading.Event()
 
     def connect(self):
         self.client.connect(self.broker_url, self.broker_port)
@@ -85,6 +88,7 @@ class MQTTClient:
     def on_connect(self, client, userdata, flags, rc):
         if rc == 0:
             print("Connected to MQTT broker")
+            self.connected_event.set()
         else:
             print(f"Failed to connect, return code={rc}")
 
@@ -151,7 +155,6 @@ class TimerThread(threading.Thread):
                 print("The timer was cancelled")
                 event_triggered.set()
             elif time.time() - start_time > self.duration:
-                print("The timer completed")
                 self.callback(self.timer_id)
                 event_triggered.set()
 
@@ -196,7 +199,6 @@ def start_timer(timer_id, duration):
     timer_thread = TimerThread(timer_id, duration)
     active_timers[timer_id] = timer_thread
     timer_thread.start()
-    return timer_thread
 
 def cancel_timer(timer_id):
     timer_thread = active_timers.get(timer_id)
@@ -234,8 +236,10 @@ def read_json_file(file_path):
 
 
 if __name__ == '__main__':
+
     mqtt_client = MQTTClient("localhost", 1883)
     mqtt_client.connect()
+    mqtt_client.connected_event.wait()
 
     test_report = TestReport()  # Create an instance of TestReport
 
@@ -261,12 +265,11 @@ if __name__ == '__main__':
 
             else:
                 print(f"Unknown action type: {action_type}")
-        print(expected_topics)
 
         while active_timers:
             timer_completion_event.wait(timeout=0)
 
-
+        print(test_result)
         test_report.add_result(test_result)
         timer_completion_event.clear()
 
