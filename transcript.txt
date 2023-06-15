@@ -35,12 +35,6 @@ pub "creoir/asr/setContext" with password grammar timeout 5 seconds.
 sub "creoir/asr/intentNotRecognized" 
 sleep 5 seconds.
 
-Test 5: No timeout
-pub "creoir/asr/setContext" with password grammar timeout 0
-Sleep 6 seconds.
-play "voice is the key"
-sub "creoir/asr/intentNotRecognized"
-
 Test 6: Get config
 sub "creoir/config/current"
 pub "creoir/config/get"
@@ -51,40 +45,53 @@ sub "creoir/config/current"
 pub "creoir/config/get"
 returning config must contain {"utteranceThreshold":4699}
 
-Test 9: Resume from idle
+Test 8: Resume from idle
 pub "creoir/asr/idle" empty payload
 sleep 2 seconds.
 pub "creoir/asr/resumeWakeword"
+play "hello home"
+sub "creoir/asr/listening"
 
-Test 10: Temperature change
+Test 9: Temperature change
 Play "hello home"
 sub "creoir/asr/listening"
-play "Set temperature"
+play "Set temperature to 22 degrees"
 sub "creoir/asr/intentRecognized"
 setCtx "YES_NO"
 play "no i mean bedroom"
 sub "creoir/asr/intentRecognized"
 
-Test 11: Grm compile test
+Test 10: Grm compile test
 pub "creoir/asr/compileGrammar" {"grammarName":"COMPILETEST", "grammarFilepath":"../usr/share/creoir/bnf/compiletest.bnf"}
 sub "creoir/asr/compileResult" Must be OK
 sub "creoir/asr/compilerReleased"
+
+Test 11: Compiled grammar test
 setCtx {"contextName":"COMPILETEST", "action_after_result":"resume_to_this_context", "timeOut":0}
+sub "creoir/asr/intentRecognized"
+play "jotain"
 
 Test 12: Audio scenario change
 pub "creoir/audioIn/setScenario" {\"scenarioName\":\"cre_defaultin\"}
 sub "creoir/audioIn/changeResult"
 play "hello home"
 sub "creoir/asr/listening"
-pub "creoir/asr/resumeWakeword"
+
+Test 13: Audio scenario change back
 pub "creoir/audioIn/setScenario" {\"scenarioName\":\"cre_audioin\"}
 "creoir/audioIn/changeResult"
 play "hello home"
 sub "creoir/asr/listening"
 
-Test 13: Invalid payloads.
+Test 14: Invalid payloads.
 pub "creoir/config/set" {"xenableVADevents":"tsipaduidaa"}
 pub "creoir/asr/setContext" {"enableVADevents":"tsipaduidaa"}
 pub "creoir/asr/setContext" {}
 pub "creoir/talk/speak" {"foo":"bar"}
 Expect error from every topic
+
+--------------------------------------------------------------------
+Possible test cases
+
+Test xx: Test action_after_result with resume_to_idle
+Test xx: Test action_after_result with toggle_this_and_wakeword

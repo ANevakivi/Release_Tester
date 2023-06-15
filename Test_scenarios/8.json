@@ -1,33 +1,46 @@
 {
-	"testName":"Audio scenario switch",
-	"mqtt_pub":[
+	"testName":"Resume from idle",
+	"Actions":[
 		{
-			"topic":"creoir/asr/setContext",
-			"payload":{"contextNames":["wuw_enu"], "timeOut":6500, "action_after_result": "resume_to_idle"}
-		}
-
-	],
-	"mqtt_sub":[
-		{
-			"topic":"creoir/asr/error",
-			"payload":"Any",
-			"timeOut": 0
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"failOnReceived":1
+			}
 		},
 		{
-			"topic":"creoir/asr/intentRecognized",
-			"payload":{"intent":"TEMP_SET","grammar":"homecommand"},
-			"timeOut": 10000
+			"pub":
+			{
+				"topic":"creoir/asr/idle",
+				"sleep":300,
+				"payload":{}
+			}
 		},
 		{
-			"topic":"creoir/asr/intentNotRecognized",
-			"payload":"Any",
-			"timeOut": -6000
-		}
-		
-	],
-	"playBackAudio":[
+			"sleep":2000
+		},
 		{
-			"filePath": "foo/bar/test1.wav"
+			"pub":
+			{
+				"topic":"creoir/asr/resumeWakeword",
+				"sleep":300,
+				"payload":{}
+			}
+		},
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/listening",
+				"payload":"any",
+				"timeout": 3000
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/hello_home.wav"
+			}
 		}
 	]
 }

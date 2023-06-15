@@ -1,0 +1,70 @@
+{
+	"testName":"action_after_result with this_and_wakeword",
+	"Actions":[
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"failOnReceived":1
+				
+			}
+		},
+		{
+			"pub":
+			{
+				"topic":"creoir/asr/setContext",
+				"sleep":300,
+				"payload":
+				{
+					"contextName":"PASSWORD",
+					"timeOut":0,
+					"action_after_result":"toggle_this_and_wakeword"
+				}
+			}
+		},
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/intentRecognized",
+				"payload":"any",
+				"timeout":5000
+				
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/voice_is_the_key.wav"
+			}
+		},
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/listening",
+				"payload":"any",
+				"timeout":5000
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/hello_home.wav"
+			}
+		},
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/intentRecognized",
+				"payload":{"utterance":"voice is the key"},
+				"timeout":5000
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/voice_is_the_key.wav"
+			}
+		}
+	]
+}

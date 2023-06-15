@@ -1,33 +1,49 @@
 {
 	"testName":"Version querry",
 	"Actions":[
-	{
-		"sub":
 		{
-			"topic":"creoir/asr/listening",
-			"payload":"any",
-			"timeout":4000
-		}
-	},
-	{
-		"play":
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"failOnReceived":1
+			}
+		},
 		{
-			"filename":"hello_home.wav"
-		}
-	},
-	{
-		"sub":
+			"sub":
+			{
+				"topic":"creoir/asr/intentNotRecognized",
+				"payload":"any",
+				"failOnReceived":1
+			}
+		},
 		{
-			"topic":"creoir/asr/intentRecognized",
-			"payload":"any",
-			"timeout":7000
-		}
-	},
-	{
-		"play":
+			"sub":
+			{
+				"topic":"creoir/asr/listening",
+				"payload":"any",
+				"timeout": 3000
+			}
+		},
 		{
-			"filepath":"audiofiles/version_number.wav"
+			"sub":
+			{
+				"topic":"creoir/asr/intentRecognized",
+				"payload":"any",
+				"timeout":7000
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/hello_home.wav"
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/what_is_your_version_number.wav"
+			}
 		}
-	}
 	]
 }

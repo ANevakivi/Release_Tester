@@ -1,0 +1,23 @@
+{
+	"testName":"Invalid payload setContext empty",
+	"Actions":[
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"timeout":5000
+				
+			}
+		},
+		{
+			"pub":
+			{
+				"topic":"creoir/config/set",
+				"sleep":300,
+				"payload":{}
+			}
+		}
+		
+	]
+}

@@ -1,43 +1,82 @@
 {
-	"testName":"Version number querry",
-	"mqtt_pub":[
-	],
-	"mqtt_sub":[
+	"testName":"Password test",
+	"Actions":[
 		{
-			"topic":"creoir/asr/listening",
-			"payload":"any",
-			"timeOut": 3000
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"failOnReceived":1
+			}
 		},
 		{
-			"topic":"creoir/asr/intentRecognized",
-			"payload":"any",
-			"timeOut": 3000
+			"sub":
+			{
+				"topic":"creoir/asr/intentNotRecognized",
+				"payload":"any",
+				"failOnReceived":1
+			}
 		},
 		{
-			"topic":"creoir/talk/speak",
-			"payload":"any",
-			"timeOut": 2000
+			"sub":
+			{
+				"topic":"creoir/asr/listening",
+				"payload":"any",
+				"timeout": 3000
+			}
 		},
 		{
-			"topic":"creoir/talk/finished",
-			"payload":"any",
-			"timeOut": 10000
+			"play":
+			{
+				"filePath":"audiofiles/hello_home.wav"
+			}
 		},
 		{
-			"topic":"creoir/asr/error",
-			"payload":"any",
-			"timeOut": 0
-		}		
-	],
-	"playBackAudio":[
-		{
-			"filePath": "hello_home-enu.wav"
+			"sub":
+			{
+				"topic":"creoir/asr/intentRecognized",
+				"payload":{"utterance":"open main door"},
+				"timeout":7000
+			}
 		},
 		{
-			"filePath": "open_main_door-enu.wav"
+			"play":
+			{
+				"filePath":"audiofiles/open_main_door.wav"
+			}
 		},
 		{
-			"filePath": "voice_is_the_key-enu.wav"
+			"sleep":
+			{
+				"duration":3000
+			}
+		},
+		{
+			"pub":
+			{
+				"topic":"creoir/asr/setContext",
+				"sleep":300,
+				"payload":
+				{
+					"contextName":"PASSWORD",
+					"timeOut":6000,
+					"action_after_result":"resume_to_this_context"
+				}
+			}
+		},
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/intentRecognized",
+				"payload":{"utterance":"voice is the key"},
+				"timeout":8000
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/voice_is_the_key.wav"
+			}
 		}
 	]
 }

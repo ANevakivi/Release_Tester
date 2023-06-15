@@ -1,5 +1,6 @@
 import paho.mqtt.client as mqtt
 import simpleaudio as sa
+from collections import defaultdict
 import json
 import os
 import re
@@ -11,11 +12,11 @@ timer_completion_event = threading.Event()
 timer_cancellation_event = threading.Event()
 
 active_timers = {}  # Dictionary to store active timers
-expected_topics = []
+expected_topics = defaultdict(list)
 
 # Create a logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 # Create a console handler and set the level to DEBUG
 console_handler = logging.StreamHandler()
@@ -73,10 +74,17 @@ def handle_play_file(action):
     except Exception as e:
         logger.error(f"Error: An unexpected error occurred: {str(e)}")
 
+def handle_sleep(action):
+    print(action)
+    sleep_duration = action['duration'] / 1000
+    time.sleep(sleep_duration)
+
+
 ACTION_HANDLERS = {
     "pub": handle_publish,
     "sub": handle_subscribe,
-    "play": handle_play_file
+    "play": handle_play_file,
+    "sleep": handle_sleep
 }
 
 def mqtt_thread():
@@ -123,46 +131,45 @@ class MQTTClient:
         logger.info(f"Message: {msg.payload.decode()}")
 
         if expected_topics:
-            if msg.topic not in expected_topics:
+            if msg.topic not in expected_topics.keys():
                 logger.warning(f"Received topic {msg.topic} not expected")
                 test_result.set_fail(f"Received topic {msg.topic} not expected")
                 return
             else:
-                for action in data['Actions']:
-                    for key, value in action.items():
-                        if key == "pub":
-                            continue
-                        else:
-                            if 'topic' in value.keys() and value['topic'] == msg.topic:
+                for topic, data in expected_topics.items():
+                    #logger.debug(f"topics: {topic}, data: {type(data)}")
+                    if topic == msg.topic:
+                        # Have to loop again since data is a list of dicts.
+                        for item in data:
+                            #logger.debug(f"item: {item}")
+                            if 'failOnReceive' in item and item['failOnReceive']:
+                                logger.warning("Received message triggered a fail")
+                                test_result.set_fail("Received message triggered a fail")
 
-                                if 'failOnReceive' in value and value['failOnReceive']:
-                                    logger.warning("Received message triggered a fail")
-                                    test_result.set_fail("Received message triggered a fail")
+                            elif 'payload' in item:
+                                expected_payload = item['payload']
+                                received_payload = json.loads(msg.payload.decode())
 
-                                elif 'payload' in value:
-                                    expected_payload = value['payload']
-                                    received_payload = json.loads(msg.payload.decode())
-
-                                    if expected_payload == "any":
-                                        test_result.set_pass()
+                                if expected_payload == "any":
+                                    test_result.set_pass()
+                                else:
+                                    for key, value in expected_payload.items():
+                                        if key not in received_payload or received_payload[key] != value:
+                                            logger.warning(f"Payload key {key} and value {value} not found in received payload or mismatched")
+                                            test_result.set_fail(f"Payload mismatch. Expected: {expected_payload}. Got: {received_payload}")
+                                            break
                                     else:
-                                        for key, value in expected_payload.items():
-                                            if key not in received_payload or received_payload[key] != value:
-                                                logger.warning(
-                                                    f"Payload key {key} and value {value} not found in received payload or mismatched")
-                                                test_result.set_fail(
-                                                    f"Payload mismatch. Expected: {expected_payload}. Got: {received_payload}")
-                                                break
-                                        else:
-                                            test_result.set_pass()
+                                        test_result.set_pass()
+                                        remove_payload(topic,item)
 
-                                mqtt_client.unsubscribe(msg.topic)
+                            mqtt_client.unsubscribe(msg.topic)
 
-        # Cancel the timer for the received topic
-        if active_timers:
-            if msg.topic in active_timers:
-                cancel_timer(msg.topic)
-                logger.info(f"Cancelled timer for topic: {msg.topic}")
+                            # Cancel the timer for the received topic
+                            if active_timers:
+                                if msg.topic in active_timers:
+                                    cancel_timer(msg.topic)
+                                    logger.info(f"Cancelled timer for topic: {msg.topic}")
+                            return
 
 class TimerThread(threading.Thread):
     def __init__(self, timer_id, duration_ms):
@@ -170,15 +177,14 @@ class TimerThread(threading.Thread):
         self.timer_id = timer_id
         self.duration = duration_ms / 1000.0
         self.callback = timer_callback
+        self.cancelled = False
 
     def run(self):
         event_triggered = threading.Event()
         start_time = time.time()
 
         while not event_triggered.is_set():
-
-            if timer_cancellation_event.is_set():
-                logger.info("The timer was cancelled")
+            if self.cancelled:
                 event_triggered.set()
             elif time.time() - start_time > self.duration:
                 self.callback(self.timer_id)
@@ -187,7 +193,7 @@ class TimerThread(threading.Thread):
         del active_timers[self.timer_id]
 
     def cancel(self):
-        timer_cancellation_event.set()
+        self.cancelled = True
 
 class TestResult:
     def __init__(self, test_name):
@@ -229,11 +235,8 @@ def start_timer(timer_id, duration):
 def cancel_timer(timer_id):
     timer_thread = active_timers.get(timer_id)
     if timer_thread:
-        # Set the cancellation event to cancel the timer
-        timer_cancellation_event.set()
-        timer_thread.join()  # Wait for the timer thread to complete
-        # Reset the cancellation event
-        timer_cancellation_event.clear()
+        timer_thread.cancel()
+        timer_thread.join()
 
 def timer_callback(timer_id):
     logger.debug(f"Timer {timer_id} completed")
@@ -248,6 +251,13 @@ def get_files_in_folder(folder_path):
             file_paths.append(file_path)
     file_paths.sort(key=lambda x: [int(c) if c.isdigit() else c.lower() for c in re.split('(\d+)', x)])  # Sort with custom key
     return file_paths
+
+def remove_payload(topic, payload):
+    if topic in expected_topics:
+        expected_topics[topic].remove(payload)
+        if not expected_topics[topic]:
+            del expected_topics[topic]
+
 
 def read_json_file(file_path):
     try:
@@ -275,21 +285,22 @@ if __name__ == '__main__':
         test_result = TestResult(test_name)  # Create a TestResult object for the current test case
 
         for item in data["Actions"]:
+            logger.debug(f"Active timers: {active_timers}")
             if test_result.get_result() == "Fail":
                 # Create a copy of the keys because list changed upon iteration.
-                timers = list(active_timers.keys()) 
+                timers = list(active_timers.keys())
                 for timer in timers:
                     logger.debug("Test marked as Fail cancelling remaining timers")
                     cancel_timer(timer)
                 break
-            
+
             action_type, action_data = next(iter(item.items()))
             if action_type == "sub":
-                expected_topics.append(action_data["topic"])
+                print(action_data)
+                expected_topics[action_data["topic"]].append(action_data)
 
             if action_type in ACTION_HANDLERS:
                 ACTION_HANDLERS[action_type](action_data)
-
                 if active_timers:
                     if timer_completion_event.is_set():
                         test_result.set_fail("Timeout")
@@ -297,12 +308,14 @@ if __name__ == '__main__':
             else:
                 logger.warning(f"Unknown action type: {action_type}")
 
+        logger.debug("Exited for loop for actions")
+
         while active_timers:
             timer_completion_event.wait(timeout=0)
 
         logger.info(test_result)
         test_report.add_result(test_result)
         timer_completion_event.clear()
-
+        time.sleep(0.1)
     final_report = test_report.generate_report()
     #logger.info(final_report)

@@ -1,0 +1,23 @@
+{
+	"testName":"Invalid payload setContext",
+	"Actions":[
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"timeout":5000
+				
+			}
+		},
+		{
+			"pub":
+			{
+				"topic":"creoir/asr/setContext",
+				"sleep":300,
+				"payload":{"enableVADevents":"tsipaduidaa"}
+			}
+		}
+		
+	]
+}

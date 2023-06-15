@@ -1,33 +1,48 @@
 {
-	"testName":"Audio scenario switch",
-	"mqtt_pub":[
+	"testName":"No timeout",
+	"Actions":[
 		{
-			"topic":"creoir/asr/setContext",
-			"payload":{"contextNames":["wuw_enu"], "timeOut":6500, "action_after_result": "resume_to_idle"}
-		}
-
-	],
-	"mqtt_sub":[
-		{
-			"topic":"creoir/asr/error",
-			"payload":"Any",
-			"timeOut": 0
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"failOnReceived":1
+			}
 		},
 		{
-			"topic":"creoir/asr/intentRecognized",
-			"payload":{"intent":"TEMP_SET","grammar":"homecommand"},
-			"timeOut": 10000
+			"sub":
+			{
+				"topic":"creoir/asr/intentRecognized",
+				"payload":"any",
+				"failOnReceived":1
+			}
 		},
 		{
-			"topic":"creoir/asr/intentNotRecognized",
-			"payload":"Any",
-			"timeOut": -6000
-		}
-		
-	],
-	"playBackAudio":[
+			"sub":
+			{
+				"topic":"creoir/asr/intentNotRecognized",
+				"payload":"any"
+				"timeout":6000
+			}
+		},
 		{
-			"filePath": "foo/bar/test1.wav"
+			"pub":
+			{
+				"topic":"creoir/asr/setContext",
+				"sleep":300,
+				"payload":
+				{
+					"contextName":"PASSWORD",
+					"timeOut":5000,
+					"action_after_result":"resume_to_this_context"
+				}
+			}
+		},
+		{
+			"sleep":
+			{
+				"duration":6000
+			}
 		}
 	]
 }

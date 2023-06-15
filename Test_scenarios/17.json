@@ -1,0 +1,23 @@
+{
+	"testName":"Invalid payload speak",
+	"Actions":[
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/error",
+				"payload":"any",
+				"timeout":5000
+				
+			}
+		},
+		{
+			"pub":
+			{
+				"topic":"creoir/talk/speak",
+				"sleep":300,
+				"payload":{"foo":"bar"}
+			}
+		}
+		
+	]
+}
