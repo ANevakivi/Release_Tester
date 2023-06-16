@@ -13,7 +13,7 @@
 			"sub":
 			{
 				"topic":"creoir/audioIn/changeResult",
-				"payload":{"error":"OK"},
+				"payload":{"errors":"OK"},
 				"timeout": 3000
 			}
 		},
@@ -21,7 +21,7 @@
 			"pub":
 			{
 				"topic":"creoir/audioIn/setScenario",
-				"sleep":300,
+				"sleep":3000,
 				"payload":{"scenarioName":"cre_audioin"}
 			}
 		},

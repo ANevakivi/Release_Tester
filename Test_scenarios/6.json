@@ -16,6 +16,14 @@
 				"payload":"any",
 				"timeout":6000
 			}
+		},
+		{
+			"pub":
+			{
+				"topic":"creoir/config/get",
+				"sleep":300,
+				"payload":{}
+			}
 		}
 	]
 }

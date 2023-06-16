@@ -18,7 +18,6 @@
 				"payload":
 				{
 					"contextName":"PASSWORD",
-					"timeOut":0,
 					"action_after_result":"resume_to_idle"
 				}
 			}
@@ -39,11 +38,16 @@
 			}
 		},
 		{
+			"sleep":
+			{
+				"duration":2000
+			}
+		},
+		{
 			"sub":
 			{
 				"topic":"creoir/asr/intentRecognized",
 				"payload":"any",
-				"timeout":5000,
 				"failOnReceived":1
 			}
 		},
@@ -52,7 +56,6 @@
 			{
 				"topic":"creoir/asr/listening",
 				"payload":"any",
-				"timeout":5000,
 				"failOnReceived":1
 			}
 		},
@@ -66,6 +69,12 @@
 			"play":
 			{
 				"filePath":"audiofiles/hello_home.wav"
+			}
+		},
+		{
+			"sleep":
+			{
+				"duration":7000
 			}
 		}
 		

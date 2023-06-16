@@ -69,7 +69,7 @@ sub "creoir/asr/compilerReleased"
 Test 11: Compiled grammar test
 setCtx {"contextName":"COMPILETEST", "action_after_result":"resume_to_this_context", "timeOut":0}
 sub "creoir/asr/intentRecognized"
-play "jotain"
+play "this should be recognized"
 
 Test 12: Audio scenario change
 pub "creoir/audioIn/setScenario" {\"scenarioName\":\"cre_defaultin\"}
@@ -77,21 +77,58 @@ sub "creoir/audioIn/changeResult"
 play "hello home"
 sub "creoir/asr/listening"
 
-Test 13: Audio scenario change back
+Test 13: Audio scenario change
 pub "creoir/audioIn/setScenario" {\"scenarioName\":\"cre_audioin\"}
 "creoir/audioIn/changeResult"
 play "hello home"
 sub "creoir/asr/listening"
 
 Test 14: Invalid payloads.
+sub "creoir/asr/error"
 pub "creoir/config/set" {"xenableVADevents":"tsipaduidaa"}
+Expect error
+
+Test 15: Invalid payloads.
+sub "creoir/asr/error"
 pub "creoir/asr/setContext" {"enableVADevents":"tsipaduidaa"}
+Expect error
+
+Test 16: Invalid payloads.
+sub "creoir/asr/error"
 pub "creoir/asr/setContext" {}
+Expect error
+
+Test 17: Invalid payloads.
+sub "creoir/asr/error"
 pub "creoir/talk/speak" {"foo":"bar"}
-Expect error from every topic
+Expect error
 
---------------------------------------------------------------------
-Possible test cases
+Test 18: action_after_result with resume_to_idle.
+sub "creoir/asr/error"
+pub "creoir/asr/setContext" with {"contextName":"PASSWORD","action_after_result":"toggle_this_and_wakeword"}
+sub "creoir/asr/intentRecognized"
+play "voice_is_the_key"
+sub "creoir/asr/listening"
+play "hello_home" fail if received
+sub "creoir/asr/intentRecognized"
+play "voice_is_the_key" fail if received
 
-Test xx: Test action_after_result with resume_to_idle
-Test xx: Test action_after_result with toggle_this_and_wakeword
+Test 19: action_after_result with this_and_wakeword
+sub "creoir/asr/error"
+pub "creoir/asr/setContext" with {"contextName":"PASSWORD","action_after_result":"toggle_this_and_wakeword"}
+sub "creoir/asr/intentRecognized"
+play "voice_is_the_key"
+sub "creoir/asr/listening"
+play "hello_home" expected
+sub "creoir/asr/intentRecognized"
+play "voice_is_the_key" expected
+
+
+
+
+-----------------------------------------------------------
+Issue test cases. Need to be tested again.
+Test 13.Audio scenario change to cre_audioin. Current SDK uses AEC binaries.
+Test 14: Invalid payloads. OVS doesn't provide error
+Test 15: Invalid payloads. OVS doesn't provide error
+Test 19: action_after_result with this_and_wakeword. Issue where intentRecognized topic timeout too quick on OVS side.

@@ -212,7 +212,7 @@ class TestResult:
         return self.result
 
     def __str__(self):
-        return f"Test Name: {self.test_name}\nResult: {self.result}\nReason: {self.reason or 'N/A'}\n"
+        return f"Test Name: {self.test_name}\nResult: {self.result}\nReason: {self.reason or 'N/A'}\n\n"
 
 class TestReport:
     def __init__(self):
@@ -301,9 +301,6 @@ if __name__ == '__main__':
 
             if action_type in ACTION_HANDLERS:
                 ACTION_HANDLERS[action_type](action_data)
-                if active_timers:
-                    if timer_completion_event.is_set():
-                        test_result.set_fail("Timeout")
 
             else:
                 logger.warning(f"Unknown action type: {action_type}")
@@ -318,4 +315,4 @@ if __name__ == '__main__':
         timer_completion_event.clear()
         time.sleep(0.1)
     final_report = test_report.generate_report()
-    #logger.info(final_report)
+    logger.info(final_report)

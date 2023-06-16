@@ -42,7 +42,7 @@
 		{
 			"play":
 			{
-				"filePath":"audiofiles/set_temperature_to_22_degrees.wav"
+				"filePath":"audiofiles/set_temperature_22_degrees.wav"
 			}
 		},
 		{
@@ -52,7 +52,7 @@
 				"sleep":300,
 				"payload":
 				{
-					"contextName":"YES_NO",
+					"contextName":"YESNO",
 					"timeOut":0,
 					"action_after_result":"resume_to_this_context"
 				}

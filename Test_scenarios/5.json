@@ -1,5 +1,5 @@
 {
-	"testName":"No timeout",
+	"testName":"timeout",
 	"Actions":[
 		{
 			"sub":
@@ -21,7 +21,7 @@
 			"sub":
 			{
 				"topic":"creoir/asr/intentNotRecognized",
-				"payload":"any"
+				"payload":"any",
 				"timeout":6000
 			}
 		},
@@ -33,8 +33,7 @@
 				"payload":
 				{
 					"contextName":"PASSWORD",
-					"timeOut":5000,
-					"action_after_result":"resume_to_this_context"
+					"timeOut":5000
 				}
 			}
 		},
