@@ -1,5 +1,5 @@
 {
-	"testName":"Get config",
+	"testName":"Resume from idle",
 	"Actions":[
 		{
 			"sub":
@@ -10,19 +10,39 @@
 			}
 		},
 		{
-			"sub":
+			"pub":
 			{
-				"topic":"creoir/config/current",
-				"payload":"any",
-				"timeout":6000
+				"topic":"creoir/asr/idle",
+				"sleep":300,
+				"payload":{}
+			}
+		},
+		{
+			"sleep":
+			{
+				"duration":2000
 			}
 		},
 		{
 			"pub":
 			{
-				"topic":"creoir/config/get",
+				"topic":"creoir/asr/resumeWakeword",
 				"sleep":300,
 				"payload":{}
+			}
+		},
+		{
+			"sub":
+			{
+				"topic":"creoir/asr/listening",
+				"payload":"any",
+				"timeout": 3000
+			}
+		},
+		{
+			"play":
+			{
+				"filePath":"audiofiles/hello_home.wav"
 			}
 		}
 	]

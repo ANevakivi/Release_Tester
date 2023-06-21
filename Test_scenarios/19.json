@@ -5,7 +5,7 @@
 			"sub":
 			{
 				"topic":"creoir/asr/error",
-				"payload":"any",
+				"payload":{"level":"error"},
 				"failOnReceived":1
 				
 			}

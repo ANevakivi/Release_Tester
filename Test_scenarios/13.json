@@ -26,6 +26,14 @@
 			}
 		},
 		{
+			"pub":
+			{
+				"topic":"creoir/asr/resumeWakeword",
+				"sleep":300,
+				"payload":{}
+			}
+		},
+		{
 			"sub":
 			{
 				"topic":"creoir/asr/listening",

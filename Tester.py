@@ -7,6 +7,7 @@ import re
 import threading
 import time
 import logging
+import datetime
 
 timer_completion_event = threading.Event()
 timer_cancellation_event = threading.Event()
@@ -16,7 +17,7 @@ expected_topics = defaultdict(list)
 
 # Create a logger
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 # Create a console handler and set the level to DEBUG
 console_handler = logging.StreamHandler()
@@ -40,7 +41,7 @@ sa_logger.setLevel(logging.DEBUG)
 sa_logger.addHandler(console_handler)
 
 def handle_publish(action):
-    logger.info(
+    logger.debug(
         f"\nAction publish.\n"
         f"Topic: {action['topic']}\n"
         f"Payload: {action['payload']}\n"
@@ -53,18 +54,18 @@ def handle_publish(action):
 
 def handle_subscribe(action):
     mqtt_client.subscribe(action['topic'])
-    logger.info(
+    logger.debug(
         f"\nAction subscribe.\n"
         f"Topic: {action['topic']}\n"
         f"Payload requirement: {action['payload']}"
     )
     if "timeout" in action:
         start_timer(action['topic'], action['timeout'])
-        logger.info(f"timeout: {action['timeout']}\n")
+        logger.debug(f"timeout: {action['timeout']}\n")
 
 def handle_play_file(action):
     file_path = action['filePath']
-    print(f"Playing file:{file_path}")
+    logger.debug(f"Playing file:{file_path}")
     try:
         wave_obj = sa.WaveObject.from_wave_file(file_path)
         play_obj = wave_obj.play()
@@ -75,7 +76,6 @@ def handle_play_file(action):
         logger.error(f"Error: An unexpected error occurred: {str(e)}")
 
 def handle_sleep(action):
-    print(action)
     sleep_duration = action['duration'] / 1000
     time.sleep(sleep_duration)
 
@@ -168,7 +168,7 @@ class MQTTClient:
                             if active_timers:
                                 if msg.topic in active_timers:
                                     cancel_timer(msg.topic)
-                                    logger.info(f"Cancelled timer for topic: {msg.topic}")
+                                    logger.debug(f"Cancelled timer for topic: {msg.topic}")
                             return
 
 class TimerThread(threading.Thread):
@@ -227,6 +227,15 @@ class TestReport:
             report += str(test_result)
         return report
 
+    def write_report_file(self):
+        current_time = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        file_name = f"{current_time}.txt"
+
+        with open(file_name, "w") as file:
+            for test_result in self.test_results:
+                file.write(str(test_result) + "\n")
+
+
 def start_timer(timer_id, duration):
     timer_thread = TimerThread(timer_id, duration)
     active_timers[timer_id] = timer_thread
@@ -258,7 +267,6 @@ def remove_payload(topic, payload):
         if not expected_topics[topic]:
             del expected_topics[topic]
 
-
 def read_json_file(file_path):
     try:
         with open(file_path, 'r') as file:
@@ -269,6 +277,7 @@ def read_json_file(file_path):
     except Exception as e:
         logger.error(f"An error occurred while reading JSON file: {file_path}")
         logger.error(f"Error message: {str(e)}")
+
 
 if __name__ == '__main__':
     mqtt_client = MQTTClient("localhost", 1883)
@@ -296,7 +305,7 @@ if __name__ == '__main__':
 
             action_type, action_data = next(iter(item.items()))
             if action_type == "sub":
-                print(action_data)
+                logger.debug(action_data)
                 expected_topics[action_data["topic"]].append(action_data)
 
             if action_type in ACTION_HANDLERS:
@@ -315,4 +324,5 @@ if __name__ == '__main__':
         timer_completion_event.clear()
         time.sleep(0.1)
     final_report = test_report.generate_report()
+    test_report.write_report_file()
     logger.info(final_report)

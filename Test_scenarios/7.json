@@ -1,5 +1,5 @@
 {
-	"testName":"Set config",
+	"testName":"Get config",
 	"Actions":[
 		{
 			"sub":
@@ -10,22 +10,11 @@
 			}
 		},
 		{
-			"pub":
-			{
-				"topic":"creoir/config/set",
-				"sleep":300,
-				"payload":
-				{
-					"utteranceThreshold":4699
-				}
-			}
-		},
-		{
 			"sub":
 			{
 				"topic":"creoir/config/current",
-				"payload":{"utteranceThreshold":4699},
-				"failOnReceived":1
+				"payload":"any",
+				"timeout":6000
 			}
 		},
 		{

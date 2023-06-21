@@ -18,6 +18,17 @@
 			}
 		},
 		{
+			"pub":
+			{
+				"topic":"creoir/asr/setContext",
+				"sleep":300,
+				"payload":
+				{
+					"contextName":"WUW_HOME"
+				}
+			}
+		},
+		{
 			"sub":
 			{
 				"topic":"creoir/asr/listening",
@@ -40,6 +51,17 @@
 			}
 		},
 		{
+			"pub":
+			{
+				"topic":"creoir/asr/setContext",
+				"sleep":300,
+				"payload":
+				{
+					"contextName":"MAIN_OVS"
+				}
+			}
+		},
+		{
 			"play":
 			{
 				"filePath":"audiofiles/set_temperature_22_degrees.wav"
@@ -53,8 +75,7 @@
 				"payload":
 				{
 					"contextName":"YESNO",
-					"timeOut":0,
-					"action_after_result":"resume_to_this_context"
+					"timeOut":0
 				}
 			}
 		},
@@ -72,6 +93,6 @@
 				"filePath":"audiofiles/no_i_mean_bedroom.wav"
 			}
 		}
-		
+
 	]
 }
